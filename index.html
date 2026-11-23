@@ -15,7 +15,7 @@
       --warn: #fbbf24;
       --border: #334155;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", sans-serif;
       background: var(--bg);
@@ -57,14 +57,24 @@
       color: var(--muted);
       margin-bottom: 4px;
     }
-    input[type="number"], select {
+    input[type="number"], input[type="text"], select {
       width: 100%;
+      min-width: 0;
       background: #0f172a;
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 10px;
+      padding: 10px 8px;
       border-radius: 8px;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+      text-align: right;
     }
     .preset-row {
       display: flex;
@@ -82,21 +92,39 @@
       cursor: pointer;
     }
     .preset-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .parts-header {
+      display: grid;
+      grid-template-columns: minmax(76px, 1.15fr) minmax(82px, 1.1fr) minmax(60px, 0.75fr) 38px;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+      padding: 0 2px;
+    }
+    .parts-header span:nth-child(2),
+    .parts-header span:nth-child(3) {
+      text-align: right;
+    }
     .part-row {
       display: grid;
-      grid-template-columns: 1.2fr 1fr 1fr auto;
-      gap: 8px;
+      grid-template-columns: minmax(76px, 1.15fr) minmax(82px, 1.1fr) minmax(60px, 0.75fr) 38px;
+      gap: 6px;
       align-items: center;
       margin-bottom: 10px;
     }
     .btn-del {
+      width: 38px;
+      height: 40px;
       background: rgba(239, 68, 68, 0.15);
       color: #f87171;
       border: 1px solid rgba(239, 68, 68, 0.3);
       border-radius: 8px;
-      padding: 9px 12px;
       cursor: pointer;
       font-weight: bold;
+      font-size: 1rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
     .btn-add {
       width: 100%;
@@ -170,6 +198,18 @@
     footer { text-align: center; font-size: 0.75rem; color: var(--muted); margin-top: 20px; }
     @media (max-width: 520px) {
       .grid-3, .summary-grid { grid-template-columns: 1fr; }
+      .parts-header, .part-row {
+        grid-template-columns: minmax(68px, 1fr) minmax(76px, 1.05fr) minmax(52px, 0.7fr) 36px;
+        gap: 5px;
+      }
+      input[type="number"], input[type="text"] {
+        padding: 9px 6px;
+        font-size: 0.88rem;
+      }
+      .btn-del {
+        width: 36px;
+        height: 38px;
+      }
     }
   </style>
 </head>
@@ -207,6 +247,12 @@
 
     <div class="card">
       <h2>2. 切り出したいパーツ寸法リスト</h2>
+      <div class="parts-header">
+        <span>部材名</span>
+        <span>長さ(mm)</span>
+        <span>本数</span>
+        <span></span>
+      </div>
       <div id="partsList"></div>
       <button class="btn-add" onclick="addPart('', 400, 2)">＋ パーツを追加する</button>
     </div>
@@ -261,10 +307,10 @@
         const row = document.createElement('div');
         row.className = 'part-row';
         row.innerHTML = `
-          <input type="text" placeholder="部材名" value="${p.name}" oninput="updatePart(${idx}, 'name', this.value)" style="background:#0f172a;border:1px solid #334155;color:#f8fafc;padding:10px;border-radius:8px;font-size:0.9rem;">
+          <input type="text" placeholder="部材名" value="${p.name}" oninput="updatePart(${idx}, 'name', this.value)">
           <input type="number" placeholder="長さmm" value="${p.len}" min="1" oninput="updatePart(${idx}, 'len', Number(this.value))">
           <input type="number" placeholder="本数" value="${p.qty}" min="1" oninput="updatePart(${idx}, 'qty', Number(this.value))">
-          <button class="btn-del" onclick="removePart(${idx})">×</button>
+          <button type="button" class="btn-del" onclick="removePart(${idx})" aria-label="削除">×</button>
         `;
         container.appendChild(row);
       });
@@ -306,7 +352,6 @@
         }
       });
 
-      // First-Fit Decreasing (FFD) アルゴリズムで最適配置
       pieces.sort((a, b) => b.len - a.len);
       const boards = [];
 
@@ -358,8 +403,7 @@
 
     renderParts();
     calc();
+    <!-- 既存のGoatCounterスクリプトがあれば、この直前または </body> の直前に貼り付けてください -->
   </script>
-  <script data-goatcounter="https://sakuraikei.goatcounter.com/count"
-        async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
